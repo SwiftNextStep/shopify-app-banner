@@ -6,6 +6,7 @@ import { Provider, useAppBridge } from "@shopify/app-bridge-react";
 import { authenticatedFetch } from "@shopify/app-bridge-utils";
 import "@shopify/polaris/dist/styles.css";
 import translations from "@shopify/polaris/locales/en.json";
+import ClientRouter from "../components/ClientRouter";
 
 function MyProvider(props) {
   const app = useAppBridge();
@@ -38,7 +39,12 @@ class MyApp extends App {
             forceRedirect: true,
           }}
         >
-          <MyProvider Component={Component} {...pageProps} />
+          <ClientRouter />
+          <MyProvider
+            Component={Component}
+            {...pageProps}
+            shopOrigin={shopOrigin}
+          />
         </Provider>
       </AppProvider>
     );

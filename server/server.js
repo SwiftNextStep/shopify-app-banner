@@ -6,7 +6,10 @@ import Shopify, { ApiVersion } from "@shopify/shopify-api";
 import Koa from "koa";
 import next from "next";
 import Router from "koa-router";
+import fs from "fs";
+import routes from "./router/index";
 
+import { Session } from "@shopify/shopify-api/dist/auth/session";
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
 const dev = process.env.NODE_ENV !== "production";
@@ -15,20 +18,47 @@ const app = next({
 });
 const handle = app.getRequestHandler();
 
+function storeCallback(session) {
+  console.log("storeCallback ");
+  fs.writeFileSync("./session.json", JSON.stringify(session));
+  return true;
+}
+
+function loadCallback(id) {
+  console.log("loadCallback ");
+  const sessionResult = fs.readFileSync("./session.json", "utf8");
+  return Object.assign(new Session(), JSON.parse(sessionResult));
+}
+
+function deleteCallback(id) {
+  console.log("deleteCallback", id);
+}
+
+const sessionStorage = new Shopify.Session.CustomSessionStorage(
+  storeCallback,
+  loadCallback,
+  deleteCallback
+);
+
 Shopify.Context.initialize({
   API_KEY: process.env.SHOPIFY_API_KEY,
   API_SECRET_KEY: process.env.SHOPIFY_API_SECRET,
   SCOPES: process.env.SCOPES.split(","),
-  HOST_NAME: process.env.HOST.replace(/https:\/\//, ""),
+  HOST_NAME: process.env.HOSTLT.replace(/https:\/\//, ""),
   API_VERSION: ApiVersion.October20,
   IS_EMBEDDED_APP: true,
   // This should be replaced with your preferred storage strategy
-  SESSION_STORAGE: new Shopify.Session.MemorySessionStorage(),
+  SESSION_STORAGE: sessionStorage,
 });
 
 // Storing the currently active shops in memory will force them to re-login when your server restarts. You should
 // persist this object in your app.
 const ACTIVE_SHOPIFY_SHOPS = {};
+const session = loadCallback();
+if (session?.shop && session?.scope) {
+  console.log("session", session);
+  ACTIVE_SHOPIFY_SHOPS[session.shop] = session.scope;
+}
 
 app.prepare().then(async () => {
   const server = new Koa();
@@ -39,6 +69,7 @@ app.prepare().then(async () => {
       async afterAuth(ctx) {
         // Access token and shop available in ctx.state.shopify
         const { shop, accessToken, scope } = ctx.state.shopify;
+        console.log("scope", scope);
         ACTIVE_SHOPIFY_SHOPS[shop] = scope;
 
         const response = await Shopify.Webhooks.Registry.register({
@@ -88,6 +119,16 @@ app.prepare().then(async () => {
     }
   });
 
+  router.post("/script_tag", async (ctx) => {
+    console.log("ctx ->", ctx);
+    console.log("req ->", ctx.req);
+    console.log("query ->", ctx.query);
+    console.log("state ->", ctx.state);
+    console.log("session ->", ctx.session);
+    const { shop, accessToken } = ctx.state.shopify;
+    await createScriptTag(shop, accessToken);
+    ctx.body = "Create a script tag";
+  });
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
   router.get("(.*)", verifyRequest(), handleRequest); // Everything else must have sessions
