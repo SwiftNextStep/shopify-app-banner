@@ -7,6 +7,7 @@ import { authenticatedFetch } from "@shopify/app-bridge-utils";
 import "@shopify/polaris/dist/styles.css";
 import translations from "@shopify/polaris/locales/en.json";
 import ClientRouter from "../components/ClientRouter";
+import createApp from "@shopify/app-bridge";
 
 function MyProvider(props) {
   const app = useAppBridge();

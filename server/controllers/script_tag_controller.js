@@ -1,23 +1,51 @@
-import axios from "axios";
+import { DataType } from "@shopify/shopify-api";
 
-export async function createScriptTag(shop, token) {
-  const url = getCreateScriptTagUrl(shop);
-  const headers = {
-    "Content-Type": "application/json",
-    "X-Shopify-Access-Token": token,
-  };
-  const body = {
-    script_tag: {
-      event: "onload",
-      src: "https://google.com",
-    },
-  };
-  try {
-    const result = await axios.post(url, body, headers);
-    console.log(result.data);
-  } catch (err) {
-    console.error("Error creating a new tag: ", err);
+export async function createScriptTag(client) {
+  if (client) {
+    const data = {
+      script_tag: {
+        event: "onload",
+        src: "https://google.com",
+      },
+    };
+    const result = await client.post({
+      path: "script_tags",
+      data,
+      type: DataType.JSON,
+    });
+    console.log(`Result for the rest request using shopify is`, result);
+    return result;
   }
+  console.error("Could not make the rest request as the client does not exist");
+}
+
+export async function getAllScriptTags(client, src) {
+  if (!client) {
+    console.error(
+      "Could not make the rest request as the client does not exist"
+    );
+    return;
+  }
+  const result = await client.get({
+    path: "script_tags",
+    query: `"src": "google.com"`,
+  });
+  const matchSrc = result.body.script_tags.filter((tag) => tag.src === src);
+  return matchSrc;
+}
+
+export async function deleteScriptTagById(client, id) {
+  if (!client) {
+    console.error(
+      "Could not make the rest request as the client does not exist"
+    );
+    return;
+  }
+  const result = await client.delete({
+    path: `script_tags/${id}`,
+  });
+  console.log(result);
+  return result;
 }
 
 function getBaseUrl(shop) {

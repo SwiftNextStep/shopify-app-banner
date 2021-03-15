@@ -19,3 +19,5 @@ config/tunnel.pid
 
 # next build output
 .next/
+
+session.json

@@ -1,0 +1,25 @@
+{
+  "id": "fe3b49d1-72ca-4111-b6cd-bddc409e2f67",
+  "shop": "swiftnextstep.myshopify.com",
+  "state": "650961563386916",
+  "isOnline": true,
+  "accessToken": "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",
+  "expires": "2021-03-14T05:58:56.078Z",
+  "scope": "write_products,write_customers,write_draft_orders,write_script_tags",
+  "onlineAccessInfo": {
+    "expires_in": 86399,
+    "associated_user_scope": "write_products,write_customers,write_draft_orders,write_script_tags",
+    "session": "7ec6dfa172566f599e6c5be6fc754c251a5b98b9ce43fabbc6fdfefa37a2d81f",
+    "account_number": 0,
+    "associated_user": {
+      "id": 71207485609,
+      "first_name": "Icaro",
+      "last_name": "Lavrador",
+      "email": "swiftnextstep@gmail.com",
+      "account_owner": true,
+      "locale": "en-NZ",
+      "collaborator": false,
+      "email_verified": true
+    }
+  }
+}

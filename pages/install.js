@@ -1,29 +1,37 @@
 import { Layout, Page, SettingToggle, TextStyle } from "@shopify/polaris";
-import React, { useState } from "react";
-import Axios from "axios";
-import { getSessionToken } from "@shopify/app-bridge-utils";
+import React, { useEffect, useState } from "react";
+import { useAxios } from "../hooks/useAxios";
+
 function install() {
-  const instance = Axios.create();
-  instance.interceptors.request.use(function (config) {
-    return getSessionToken(window.app).then((token) => {
-      config.headers["Authorization"] = `Bearer ${token}`;
-      return config;
-    });
-  });
+  const [axios] = useAxios();
   const [isInstalled, setIsInstalled] = useState(null);
+  const [scriptTagId, setScriptTagId] = useState();
   const titleDescription = isInstalled ? "Uninstall" : "Install";
   const bodyDescription = isInstalled ? "installed" : "uninstalled";
+
+  async function fetchScriptTags() {
+    const { data } = await axios.get(
+      `https://il-shopify2.loca.lt/script_tag/all`
+    );
+    console.log("my initial script tag status: ", data);
+    setIsInstalled(data.installed);
+    if (data.details.length > 0) {
+      setScriptTagId(data.details[0].id);
+    }
+  }
+  useEffect(() => {
+    fetchScriptTags();
+  }, []);
+
   async function handleAction() {
     if (!isInstalled) {
-      try {
-        const response = instance.post("https://il-shopify.loca.lt/script_tag");
-        console.log(response.data);
-      } catch (err) {
-        console.log(err);
-      }
+      axios.post(`https://il-shopify2.loca.lt/script_tag`);
+    } else {
+      axios.delete(`https://il-shopify2.loca.lt/script_tag/?id=${scriptTagId}`);
     }
     setIsInstalled((oldValue) => !oldValue);
   }
+
   return (
     <Page>
       <Layout.AnnotatedSection

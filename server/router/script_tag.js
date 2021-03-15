@@ -1,27 +1,33 @@
-import { verifyRequest } from "@shopify/koa-shopify-auth";
 import Router from "koa-router";
-import { createScriptTag } from "../controllers/script_tag_controller";
+import {
+  createScriptTag,
+  deleteScriptTagById,
+  getAllScriptTags,
+} from "../controllers/script_tag_controller";
 const router = new Router({ prefix: "/script_tag" });
 router.get("/", async (ctx) => {
   ctx.body = "Get script tag";
 });
 router.get("/all", async (ctx) => {
-  ctx.body = "Get all script tag";
+  console.log("Get all script tag");
+  const result = await getAllScriptTags(ctx.myClient, "https://google.com/");
+  ctx.body = {
+    installed: result.length > 0,
+    details: result,
+  };
 });
 
-router.post("/", verifyRequest(), async (ctx) => {
-  console.log("ctx ->", ctx);
-  console.log("req ->", ctx.req);
-  console.log("query ->", ctx.query);
-  console.log("state ->", ctx.state);
-  console.log("session ->", ctx.session);
-  const { shop, accessToken } = ctx.state.shopify;
-  await createScriptTag(shop, accessToken);
+router.post("/", async (ctx) => {
+  console.log("create script tag", ctx.sesionFromToken);
+  //const { shop, accessToken } = ctx.sesionFromToken;
+  await createScriptTag(ctx.myClient);
   ctx.body = "Create a script tag";
 });
 
 router.delete("/", async (ctx) => {
-  ctx.body = "Delete script tag";
+  const id = ctx.query.id;
+  const result = await deleteScriptTagById(ctx.myClient, id);
+  ctx.body = result;
 });
 
 export default router;

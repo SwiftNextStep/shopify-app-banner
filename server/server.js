@@ -8,26 +8,30 @@ import next from "next";
 import Router from "koa-router";
 import fs from "fs";
 import routes from "./router/index";
-
 import { Session } from "@shopify/shopify-api/dist/auth/session";
+
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
 const dev = process.env.NODE_ENV !== "production";
 const app = next({
   dev,
 });
-const handle = app.getRequestHandler();
 
+const handle = app.getRequestHandler();
+const FILENAME = "./session.json";
 function storeCallback(session) {
   console.log("storeCallback ");
-  fs.writeFileSync("./session.json", JSON.stringify(session));
+  fs.writeFileSync(FILENAME, JSON.stringify(session));
   return true;
 }
 
 function loadCallback(id) {
   console.log("loadCallback ");
-  const sessionResult = fs.readFileSync("./session.json", "utf8");
-  return Object.assign(new Session(), JSON.parse(sessionResult));
+  if (fs.existsSync(FILENAME)) {
+    const sessionResult = fs.readFileSync(FILENAME, "utf8");
+    return Object.assign(new Session(), JSON.parse(sessionResult));
+  }
+  return false;
 }
 
 function deleteCallback(id) {
@@ -69,7 +73,6 @@ app.prepare().then(async () => {
       async afterAuth(ctx) {
         // Access token and shop available in ctx.state.shopify
         const { shop, accessToken, scope } = ctx.state.shopify;
-        console.log("scope", scope);
         ACTIVE_SHOPIFY_SHOPS[shop] = scope;
 
         const response = await Shopify.Webhooks.Registry.register({
@@ -119,16 +122,23 @@ app.prepare().then(async () => {
     }
   });
 
-  router.post("/script_tag", async (ctx) => {
-    console.log("ctx ->", ctx);
-    console.log("req ->", ctx.req);
-    console.log("query ->", ctx.query);
-    console.log("state ->", ctx.state);
-    console.log("session ->", ctx.session);
-    const { shop, accessToken } = ctx.state.shopify;
-    await createScriptTag(shop, accessToken);
-    ctx.body = "Create a script tag";
-  });
+  async function injectSession(ctx, next) {
+    const session = await Shopify.Utils.loadCurrentSession(ctx.req, ctx.res);
+    ctx.sesionFromToken = session;
+    console.log("s", session);
+    if (session?.shop && session?.accessToken) {
+      const client = new Shopify.Clients.Rest(
+        session.shop,
+        session.accessToken
+      );
+      ctx.myClient = client;
+    }
+    return next();
+  }
+
+  server.use(injectSession);
+  server.use(routes());
+
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
   router.get("(.*)", verifyRequest(), handleRequest); // Everything else must have sessions
