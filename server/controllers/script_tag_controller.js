@@ -28,7 +28,6 @@ export async function getAllScriptTags(client, src) {
   }
   const result = await client.get({
     path: "script_tags",
-    query: `"src": "google.com"`,
   });
   const matchSrc = result.body.script_tags.filter((tag) => tag.src === src);
   return matchSrc;

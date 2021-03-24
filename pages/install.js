@@ -11,7 +11,7 @@ function install() {
 
   async function fetchScriptTags() {
     const { data } = await axios.get(
-      `https://il-shopify2.loca.lt/script_tag/all`
+      `https://il-shopify3.loca.lt/script_tag/all`
     );
     console.log("my initial script tag status: ", data);
     setIsInstalled(data.installed);
@@ -25,9 +25,9 @@ function install() {
 
   async function handleAction() {
     if (!isInstalled) {
-      axios.post(`https://il-shopify2.loca.lt/script_tag`);
+      axios.post(`https://il-shopify3.loca.lt/script_tag`);
     } else {
-      axios.delete(`https://il-shopify2.loca.lt/script_tag/?id=${scriptTagId}`);
+      axios.delete(`https://il-shopify3.loca.lt/script_tag/?id=${scriptTagId}`);
     }
     setIsInstalled((oldValue) => !oldValue);
   }

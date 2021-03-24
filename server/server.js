@@ -9,6 +9,7 @@ import Router from "koa-router";
 import fs from "fs";
 import routes from "./router/index";
 import { Session } from "@shopify/shopify-api/dist/auth/session";
+import { updateTheme } from "./updateTheme/updateTheme";
 
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
@@ -90,6 +91,9 @@ app.prepare().then(async () => {
           );
         }
 
+        console.log("Start updating theme");
+        updateTheme(shop, accessToken);
+
         // Redirect to app with shop parameter upon auth
         ctx.redirect(`/?shop=${shop}`);
       },
@@ -125,7 +129,6 @@ app.prepare().then(async () => {
   async function injectSession(ctx, next) {
     const session = await Shopify.Utils.loadCurrentSession(ctx.req, ctx.res);
     ctx.sesionFromToken = session;
-    console.log("s", session);
     if (session?.shop && session?.accessToken) {
       const client = new Shopify.Clients.Rest(
         session.shop,
